@@ -462,6 +462,15 @@ const QUESTIONS = [
 ];
 
 const LABELS = ["A","B","C","D"];
+
+function shuffle(arr){
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
 const quizEl = document.getElementById("quiz");
 const progressLabel = document.getElementById("progress-label");
 const progressFill = document.getElementById("progress-fill");
@@ -550,7 +559,11 @@ function renderQuestion(){
   });
   nextWrap.appendChild(nextBtn);
 
-  q.choices.forEach((text, ci) => {
+  const order = shuffle([0, 1, 2, 3]);
+  const correctPosition = order.indexOf(q.correct);
+
+  order.forEach((origIdx, ci) => {
+    const text = q.choices[origIdx];
     const btn = document.createElement("button");
     btn.className = "choice";
     btn.innerHTML = `<span class="label">${LABELS[ci]}</span>${text}`;
@@ -559,14 +572,14 @@ function renderQuestion(){
       const buttons = choicesWrap.querySelectorAll("button.choice");
       buttons.forEach(b => b.dataset.locked = "1");
 
-      if (ci === q.correct) {
+      if (ci === correctPosition) {
         btn.classList.add("correct");
         feedback.textContent = "○ 正解！";
         feedback.className = "feedback ok";
         score++;
       } else {
         btn.classList.add("wrong");
-        buttons[q.correct].classList.add("correct");
+        buttons[correctPosition].classList.add("correct");
         feedback.textContent = "× 不正解";
         feedback.className = "feedback no";
       }
