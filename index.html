@@ -153,6 +153,38 @@
     font-size:0.85rem;
     color:var(--sub);
   }
+  .q-meaning-prompt{
+    font-size:1.05rem;
+    line-height:1.8;
+    background:var(--accent-soft);
+    border-radius:10px;
+    padding:14px 16px;
+    margin:2px 0 4px;
+  }
+  .mode-switch{
+    max-width:720px;
+    margin:14px auto 0;
+    padding:0 16px;
+    display:flex;
+    gap:8px;
+  }
+  .mode-btn{
+    flex:1;
+    padding:10px 8px;
+    border-radius:10px;
+    border:1.5px solid var(--border);
+    background:#fff;
+    color:var(--sub);
+    font-size:0.88rem;
+    cursor:pointer;
+    transition:background .15s, border-color .15s, color .15s;
+  }
+  .mode-btn.active{
+    background:var(--accent);
+    border-color:var(--accent);
+    color:#fff;
+    font-weight:700;
+  }
   .choices{
     display:flex;
     flex-direction:column;
@@ -289,8 +321,13 @@
 
 <header>
   <h1>四字熟語クイズ</h1>
-  <p>正しい意味を選んでください。1問ずつ答え合わせをしながら進みます。</p>
+  <p id="instruction">正しい意味を選んでください。1問ずつ答え合わせをしながら進みます。</p>
 </header>
+
+<div class="mode-switch" id="mode-switch">
+  <button class="mode-btn active" data-mode="term">四字熟語 → 意味を選ぶ</button>
+  <button class="mode-btn" data-mode="meaning">意味 → 四字熟語を選ぶ</button>
+</div>
 
 <main id="quiz"></main>
 
@@ -488,12 +525,34 @@ const quizEl = document.getElementById("quiz");
 const progressLabel = document.getElementById("progress-label");
 const progressFill = document.getElementById("progress-fill");
 const scoreLabel = document.getElementById("score-label");
+const instructionEl = document.getElementById("instruction");
+const modeSwitchEl = document.getElementById("mode-switch");
+
+const INSTRUCTIONS = {
+  term: "正しい意味を選んでください。1問ずつ答え合わせをしながら進みます。",
+  meaning: "意味に合う四字熟語を選んでください。1問ずつ答え合わせをしながら進みます。"
+};
 
 const allIndices = QUESTIONS.map((_, i) => i);
 let activeIndices = allIndices.slice();
 let current = 0;
 let score = 0;
 let wrongIndices = [];
+let mode = "term";
+
+modeSwitchEl.querySelectorAll(".mode-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    if (btn.dataset.mode === mode) return;
+    mode = btn.dataset.mode;
+    modeSwitchEl.querySelectorAll(".mode-btn").forEach(b => b.classList.toggle("active", b === btn));
+    instructionEl.textContent = INSTRUCTIONS[mode];
+    activeIndices = allIndices.slice();
+    current = 0;
+    score = 0;
+    wrongIndices = [];
+    renderQuestion();
+  });
+});
 
 function updateProgress(){
   const total = activeIndices.length;
@@ -548,13 +607,27 @@ function renderQuestion(){
 
   const head = document.createElement("div");
   head.className = "q-head";
-  head.innerHTML = `
-    <span class="q-num">第${idx+1}問</span>
-    <span class="q-term">${q.term}</span>
-    <span class="q-emoji">${q.emoji}</span>
-    <span class="q-reading">（${q.reading}）</span>
-  `;
+  if (mode === "term") {
+    head.innerHTML = `
+      <span class="q-num">第${idx+1}問</span>
+      <span class="q-term">${q.term}</span>
+      <span class="q-emoji">${q.emoji}</span>
+      <span class="q-reading">（${q.reading}）</span>
+    `;
+  } else {
+    head.innerHTML = `
+      <span class="q-num">第${idx+1}問</span>
+      <span class="q-emoji">${q.emoji}</span>
+    `;
+  }
   content.appendChild(head);
+
+  if (mode === "meaning") {
+    const meaningPrompt = document.createElement("div");
+    meaningPrompt.className = "q-meaning-prompt";
+    meaningPrompt.textContent = q.choices[q.correct];
+    content.appendChild(meaningPrompt);
+  }
 
   const choicesWrap = document.createElement("div");
   choicesWrap.className = "choices";
@@ -577,11 +650,25 @@ function renderQuestion(){
   });
   nextWrap.appendChild(nextBtn);
 
-  const order = shuffle([0, 1, 2, 3]);
-  const correctPosition = order.indexOf(q.correct);
+  let optionsData;
+  if (mode === "term") {
+    const order = shuffle([0, 1, 2, 3]);
+    optionsData = order.map(origIdx => ({
+      text: q.choices[origIdx],
+      correct: origIdx === q.correct
+    }));
+  } else {
+    const distractorPool = shuffle(allIndices.filter(i => i !== idx)).slice(0, 3);
+    const optionIdxs = shuffle([idx, ...distractorPool]);
+    optionsData = optionIdxs.map(optIdx => ({
+      text: `${QUESTIONS[optIdx].term}（${QUESTIONS[optIdx].reading}）`,
+      correct: optIdx === idx
+    }));
+  }
+  const correctPosition = optionsData.findIndex(o => o.correct);
 
-  order.forEach((origIdx, ci) => {
-    const text = q.choices[origIdx];
+  optionsData.forEach((opt, ci) => {
+    const text = opt.text;
     const btn = document.createElement("button");
     btn.className = "choice";
     btn.innerHTML = `<span class="label">${LABELS[ci]}</span>${text}`;
