@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>四字熟語クイズ</title>
+<style>
+  :root{
+    --bg:#f7f5f0;
+    --card:#ffffff;
+    --ink:#2d2a26;
+    --sub:#6b6560;
+    --accent:#3a6b5c;
+    --accent-soft:#e7efec;
+    --correct:#3a7d3a;
+    --correct-bg:#e6f4e6;
+    --wrong:#b3452e;
+    --wrong-bg:#fbe9e5;
+    --border:#e3ddd2;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Hiragino Sans",Meiryo,system-ui,sans-serif;
+    background:var(--bg);
+    color:var(--ink);
+    line-height:1.7;
+    padding-bottom:80px;
+  }
+  header{
+    text-align:center;
+    padding:36px 16px 20px;
+  }
+  header h1{
+    margin:0 0 8px;
+    font-size:1.6rem;
+  }
+  header p{
+    margin:0;
+    color:var(--sub);
+    font-size:0.95rem;
+  }
+  main{
+    max-width:720px;
+    margin:0 auto;
+    padding:0 16px;
+  }
+  .card{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:14px;
+    padding:20px 20px 16px;
+    margin-bottom:16px;
+  }
+  .q-head{
+    display:flex;
+    align-items:baseline;
+    gap:10px;
+    margin-bottom:14px;
+    flex-wrap:wrap;
+  }
+  .q-num{
+    font-size:0.8rem;
+    color:var(--sub);
+    background:var(--accent-soft);
+    border-radius:999px;
+    padding:2px 10px;
+  }
+  .q-term{
+    font-size:1.25rem;
+    font-weight:700;
+  }
+  .q-emoji{
+    font-size:1.3rem;
+  }
+  .q-reading{
+    font-size:0.85rem;
+    color:var(--sub);
+  }
+  .choices{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+  }
+  button.choice{
+    text-align:left;
+    padding:12px 14px;
+    border:1.5px solid var(--border);
+    border-radius:10px;
+    background:#fff;
+    font-size:0.98rem;
+    color:var(--ink);
+    cursor:pointer;
+    transition:background .15s, border-color .15s;
+  }
+  button.choice:hover:not(:disabled){
+    border-color:var(--accent);
+  }
+  button.choice:disabled{
+    cursor:default;
+  }
+  button.choice .label{
+    font-weight:700;
+    margin-right:8px;
+    color:var(--accent);
+  }
+  button.choice.correct{
+    background:var(--correct-bg);
+    border-color:var(--correct);
+    color:var(--correct);
+  }
+  button.choice.wrong{
+    background:var(--wrong-bg);
+    border-color:var(--wrong);
+    color:var(--wrong);
+  }
+  .feedback{
+    margin-top:10px;
+    font-size:0.9rem;
+    font-weight:600;
+  }
+  .feedback.ok{ color:var(--correct); }
+  .feedback.no{ color:var(--wrong); }
+
+  .scorebar{
+    position:sticky;
+    top:0;
+    z-index:10;
+    background:rgba(247,245,240,0.92);
+    backdrop-filter:blur(6px);
+    border-bottom:1px solid var(--border);
+    padding:10px 16px;
+    display:flex;
+    justify-content:center;
+    gap:24px;
+    font-size:0.9rem;
+  }
+  .scorebar strong{
+    color:var(--accent);
+  }
+  .reset-wrap{
+    max-width:720px;
+    margin:20px auto 0;
+    padding:0 16px;
+    text-align:center;
+  }
+  #reset-btn{
+    background:var(--accent);
+    color:#fff;
+    border:none;
+    padding:10px 22px;
+    border-radius:999px;
+    font-size:0.95rem;
+    cursor:pointer;
+  }
+  #reset-btn:hover{
+    opacity:0.9;
+  }
+  footer{
+    text-align:center;
+    color:var(--sub);
+    font-size:0.8rem;
+    padding:30px 16px 10px;
+  }
+</style>
+</head>
+<body>
+
+<div class="scorebar">
+  <span>解答済み：<strong id="answered">0</strong> / 29</span>
+  <span>正解：<strong id="score">0</strong></span>
+</div>
+
+<header>
+  <h1>四字熟語クイズ</h1>
+  <p>正しい意味を選んでください。選ぶとすぐに正解・不正解が表示されます。</p>
+</header>
+
+<main id="quiz"></main>
+
+<div class="reset-wrap">
+  <button id="reset-btn">もう一度やり直す</button>
+</div>
+
+<footer>全29問 &middot; 四字熟語の意味クイズ</footer>
+
+<script>
+const QUESTIONS = [
+  {term:"暗中模索", reading:"あんちゅうもさく", emoji:"🔦", correct:1, choices:[
+    "元気をなくすこと。しょげかえること。",
+    "手がかりのないまま、あれこれやってみること。",
+    "疑いの心があると、なんでもないことでも怖いと感じること。",
+    "最初から最後まで、方針や態度が貫かれていること。"
+  ]},
+  {term:"一触即発", reading:"いっしょくそくはつ", emoji:"💣", correct:0, choices:[
+    "ちょっと触れればすぐに爆発しそうな、危険な状態。",
+    "頼るものがなく、ひとりぼっちで助けのないさま。",
+    "物事の成り行きが急に変化して、解決に向かうこと。",
+    "心遣いが行き届き、準備に手落ちがないさま。"
+  ]},
+  {term:"疑心暗鬼", reading:"ぎしんあんき", emoji:"👻", correct:1, choices:[
+    "賛成意見と反対意見の両方があること。",
+    "疑いの心があると、なんでもないことでも怖く感じられること。",
+    "古いものがだんだん新しいものに入れ替わること。",
+    "巧みに美しく飾った、内容の乏しい言葉。"
+  ]},
+  {term:"試行錯誤", reading:"しこうさくご", emoji:"🧩", correct:0, choices:[
+    "試みと失敗を繰り返しながら、解決策を見いだしていくこと。",
+    "状況に応じて、その対応を変えること。",
+    "学問や人格を、互いに励まし合いながら磨き上げること。",
+    "命令や政令が頻繁に変更されて一定しないこと。"
+  ]},
+  {term:"他力本願", reading:"たりきほんがん", emoji:"🙏", correct:2, choices:[
+    "これから先、多くの困難が待っているさま。",
+    "他人を無視して、勝手で無遠慮な言動をすること。",
+    "他人の力によって、望みをかなえようとすること。",
+    "物事の根本的なことと、そうでないことを取り違えること。"
+  ]},
+  {term:"朝令暮改", reading:"ちょうれいぼかい", emoji:"🔁", correct:0, choices:[
+    "命令や政令などが頻繁に変更されて、一定しないこと。",
+    "中身が充実して飾り気がなく、心身ともに強くたくましいさま。",
+    "ぐずぐずして、物事の決断がにぶいこと。",
+    "めったに訪れそうもない、恵まれた機会。"
+  ]},
+  {term:"傍若無人", reading:"ぼうじゃくぶじん", emoji:"🙅", correct:1, choices:[
+    "質問とそれに対する答弁。",
+    "人前をはばからず、勝手に振る舞うさま。",
+    "滅多に訪れそうもない機会。",
+    "新しい物事に対し、試みと失敗を繰り返すこと。"
+  ]},
+  {term:"本末転倒", reading:"ほんまつてんとう", emoji:"🙃", correct:0, choices:[
+    "物事の根本的なことと、そうでないことを取り違えること。",
+    "漢詩の構成法の一つ。または文章全体をまとめる構成。",
+    "頼るものがなく、ひとりぼっちで助けのないさま。",
+    "なんの面白みも味わいもないさま。"
+  ]},
+  {term:"用意周到", reading:"よういしゅうとう", emoji:"📋", correct:1, choices:[
+    "状況に応じた行動をとること。",
+    "心遣いが行き届き、準備に手落ちがないさま。",
+    "理屈に合わない無理な注文や、実現が難しい要求。",
+    "最初から最後まで、方針や態度が貫かれていること。"
+  ]},
+  {term:"臨機応変", reading:"りんきおうへん", emoji:"☂️", correct:0, choices:[
+    "状況に応じた行動をとること。場合によって対応を変えること。",
+    "学問や人格をよりいっそう磨き上げること。",
+    "ぐずぐずして決断がにぶいこと。",
+    "疑いの心から、なんでもないことも怖いと感じること。"
+  ]},
+  {term:"意気消沈", reading:"いきしょうちん", emoji:"🎈", correct:1, choices:[
+    "これから先、多くの困難や災難が待っているさま。",
+    "元気をなくすこと。しょげかえること。",
+    "頼るものがなく、ひとりぼっちで助けのないさま。",
+    "なんの面白みも味わいもないさま。"
+  ]},
+  {term:"起承転結", reading:"きしょうてんけつ", emoji:"📖", correct:2, choices:[
+    "最初から最後まで、方針や態度が貫かれていること。",
+    "質問とそれに対する答弁。",
+    "文章や話などで全体を秩序正しくまとめる構成。物事の順序や展開のしかた。",
+    "古いものがだんだん新しいものに入れ替わること。"
+  ]},
+  {term:"急転直下", reading:"きゅうてんちょっか", emoji:"🎢", correct:0, choices:[
+    "物事のようすや成り行きが急に変化して、解決や結末に向かうこと。",
+    "滅多に訪れそうもない機会。",
+    "命令や政令などが頻繁に変更されて、一定しないこと。",
+    "今まで誰も思いつかなかったことを考え出すこと。"
+  ]},
+  {term:"孤立無援", reading:"こりつむえん", emoji:"🏝️", correct:1, choices:[
+    "ぐずぐずして、物事の決断がにぶいこと。",
+    "頼るものがなく、ひとりぼっちで助けのないさま。",
+    "元気をなくすこと。しょげかえること。",
+    "中身が充実して飾り気がなく、心身ともに強くたくましいさま。"
+  ]},
+  {term:"賛否両論", reading:"さんぴりょうろん", emoji:"⚖️", correct:2, choices:[
+    "質問とそれに対する答弁。",
+    "疑いの心があると、なんでもないことでも怖いと感じること。",
+    "賛成意見と反対意見の二つがあること。",
+    "巧みに美しく飾った、内容の乏しい言葉。"
+  ]},
+  {term:"質疑応答", reading:"しつぎおうとう", emoji:"❓", correct:1, choices:[
+    "賛成意見と反対意見の二つがあること。",
+    "質問とそれに対する答弁。",
+    "文章や話などの構成、展開のしかた。",
+    "最初から最後まで、方針や態度が貫かれていること。"
+  ]},
+  {term:"質実剛健", reading:"しつじつごうけん", emoji:"💪", correct:0, choices:[
+    "中身が充実して飾り気がなく、心身ともに強くたくましいさま。",
+    "巧みに美しく飾った、内容の乏しい言葉。",
+    "心遣いが行き届き、準備に手落ちがないさま。",
+    "最初から最後まで。終始。あくまで。"
+  ]},
+  {term:"首尾一貫", reading:"しゅびいっかん", emoji:"🧭", correct:2, choices:[
+    "最初から最後まで。終始。あくまで。",
+    "文章や話などの構成、展開のしかた。",
+    "最初から最後まで、方針や態度が貫かれていること。",
+    "状況に応じた行動をとること。"
+  ]},
+  {term:"新陳代謝", reading:"しんちんたいしゃ", emoji:"🔄", correct:1, choices:[
+    "今まで誰も思いつかなかったことを考え出すこと。",
+    "古いものがだんだん新しいものに入れ替わること。",
+    "物事の成り行きが急に変化して解決に向かうこと。",
+    "滅多に訪れそうもない機会。"
+  ]},
+  {term:"切磋琢磨", reading:"せっさたくま", emoji:"🥎", correct:2, choices:[
+    "試みと失敗を繰り返しながら解決策を見いだしていくこと。",
+    "今まで誰も思いつかなかったことを考え出すこと。",
+    "学問や人格をよりいっそう磨き上げること。友人同士が励まし合い競争し合って向上すること。",
+    "中身が充実して飾り気がなく、心身ともに強くたくましいさま。"
+  ]},
+  {term:"千載一遇", reading:"せんざいいちぐう", emoji:"🌠", correct:3, choices:[
+    "物事の成り行きが急に変化して解決に向かうこと。",
+    "ちょっと触れればすぐに爆発しそうな、危険な状態。",
+    "これから先、多くの困難が待っているさま。",
+    "滅多に訪れそうもない機会。二度と来ないかもしれないほど恵まれた状態。"
+  ]},
+  {term:"前途多難", reading:"ぜんとたなん", emoji:"🌊", correct:0, choices:[
+    "これから先、多くの困難や災難が待っているさま。",
+    "頼るものがなく、ひとりぼっちで助けのないさま。",
+    "元気をなくすこと。しょげかえること。",
+    "理屈に合わない無理な注文や、実現が困難な要求。"
+  ]},
+  {term:"創意工夫", reading:"そういくふう", emoji:"💡", correct:1, choices:[
+    "試みと失敗を繰り返しながら解決策を見いだしていくこと。",
+    "今まで誰も思いつかなかったことを考え出し、それを行うためのよい方策を考えること。",
+    "学問や人格をよりいっそう磨き上げること。",
+    "状況に応じた行動をとること。"
+  ]},
+  {term:"大義名分", reading:"たいぎめいぶん", emoji:"🚩", correct:2, choices:[
+    "中身が充実して飾り気がなく、心身ともに強くたくましいさま。",
+    "賛成意見と反対意見の二つがあること。",
+    "ある行為のよりどころとなる正当な理由や道理。",
+    "理屈に合わない無理な注文。"
+  ]},
+  {term:"徹底徹尾", reading:"てっとうてつび", emoji:"➡️", correct:1, choices:[
+    "最初から最後まで、方針や態度が貫かれていること。",
+    "最初から最後まで。終始。また、あくまで。けっして。",
+    "中身が充実して飾り気がなく、心身ともに強くたくましいさま。",
+    "心遣いが行き届き、準備に手落ちがないさま。"
+  ]},
+  {term:"美辞麗句", reading:"びじれいく", emoji:"🌸", correct:1, choices:[
+    "中身が充実して飾り気がなく、心身ともに強くたくましいさま。",
+    "巧みに美しく飾った言葉。うわべだけ飾った、内容の乏しい言葉。",
+    "なんの面白みも味わいもないさま。",
+    "ある行為のよりどころとなる正当な理由や道理。"
+  ]},
+  {term:"無味乾燥", reading:"むみかんそう", emoji:"🍞", correct:1, choices:[
+    "巧みに美しく飾った、内容の乏しい言葉。",
+    "なんの面白みも味わいもないさま。",
+    "元気をなくすこと。しょげかえること。",
+    "理屈に合わない無理な注文。"
+  ]},
+  {term:"無理難題", reading:"むりなんだい", emoji:"🌳", correct:1, choices:[
+    "これから先、多くの困難が待っているさま。",
+    "理屈に合わない無理な注文。実現がとうてい不可能な要求。",
+    "ある行為のよりどころとなる正当な理由や道理。",
+    "疑いの心から、なんでもないことも怖いと感じること。"
+  ]},
+  {term:"優柔不断", reading:"ゆうじゅうふだん", emoji:"🤔", correct:2, choices:[
+    "他人の力によって、望みをかなえようとすること。",
+    "元気をなくすこと。しょげかえること。",
+    "ぐずぐずして、物事の決断がにぶいこと。",
+    "状況に応じた行動をとること。"
+  ]}
+];
+
+const LABELS = ["A","B","C","D"];
+const quizEl = document.getElementById("quiz");
+const answeredEl = document.getElementById("answered");
+const scoreEl = document.getElementById("score");
+let answeredCount = 0;
+let score = 0;
+
+function render(){
+  quizEl.innerHTML = "";
+  answeredCount = 0;
+  score = 0;
+  QUESTIONS.forEach((q, qi) => {
+    const card = document.createElement("div");
+    card.className = "card";
+
+    const head = document.createElement("div");
+    head.className = "q-head";
+    head.innerHTML = `
+      <span class="q-num">第${qi+1}問</span>
+      <span class="q-term">${q.term}</span>
+      <span class="q-emoji">${q.emoji}</span>
+      <span class="q-reading">（${q.reading}）</span>
+    `;
+    card.appendChild(head);
+
+    const choicesWrap = document.createElement("div");
+    choicesWrap.className = "choices";
+
+    const feedback = document.createElement("div");
+    feedback.className = "feedback";
+
+    q.choices.forEach((text, ci) => {
+      const btn = document.createElement("button");
+      btn.className = "choice";
+      btn.innerHTML = `<span class="label">${LABELS[ci]}</span>${text}`;
+      btn.addEventListener("click", () => {
+        if (btn.dataset.locked) return;
+        const buttons = choicesWrap.querySelectorAll("button.choice");
+        buttons.forEach(b => b.dataset.locked = "1");
+
+        if (ci === q.correct) {
+          btn.classList.add("correct");
+          feedback.textContent = "○ 正解！";
+          feedback.className = "feedback ok";
+          score++;
+        } else {
+          btn.classList.add("wrong");
+          buttons[q.correct].classList.add("correct");
+          feedback.textContent = "× 不正解";
+          feedback.className = "feedback no";
+        }
+        answeredCount++;
+        answeredEl.textContent = answeredCount;
+        scoreEl.textContent = score;
+      });
+      choicesWrap.appendChild(btn);
+    });
+
+    card.appendChild(choicesWrap);
+    card.appendChild(feedback);
+    quizEl.appendChild(card);
+  });
+  answeredEl.textContent = answeredCount;
+  scoreEl.textContent = score;
+}
+
+document.getElementById("reset-btn").addEventListener("click", render);
+
+render();
+</script>
+
+</body>
+</html>
