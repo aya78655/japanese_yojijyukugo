@@ -244,17 +244,30 @@
     color:var(--sub);
     margin-bottom:26px;
   }
-  #restart-btn{
-    background:var(--accent);
-    color:#fff;
+  .result-actions{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    align-items:center;
+  }
+  .result-actions button{
     border:none;
     padding:12px 28px;
     border-radius:999px;
     font-size:0.95rem;
     cursor:pointer;
+    min-width:240px;
   }
-  #restart-btn:hover{
+  .result-actions button:hover{
     opacity:0.9;
+  }
+  .btn-primary{
+    background:var(--accent);
+    color:#fff;
+  }
+  .btn-secondary{
+    background:var(--accent-soft);
+    color:var(--accent);
   }
   footer{
     text-align:center;
@@ -476,21 +489,26 @@ const progressLabel = document.getElementById("progress-label");
 const progressFill = document.getElementById("progress-fill");
 const scoreLabel = document.getElementById("score-label");
 
+const allIndices = QUESTIONS.map((_, i) => i);
+let activeIndices = allIndices.slice();
 let current = 0;
 let score = 0;
+let wrongIndices = [];
 
 function updateProgress(){
-  const shown = Math.min(current + 1, QUESTIONS.length);
-  progressLabel.textContent = current < QUESTIONS.length
-    ? `第${shown}問 / ${QUESTIONS.length}`
-    : `終了 / ${QUESTIONS.length}`;
-  progressFill.style.width = (current / QUESTIONS.length * 100) + "%";
+  const total = activeIndices.length;
+  const shown = Math.min(current + 1, total);
+  progressLabel.textContent = current < total
+    ? `${shown}問目 / ${total}問中`
+    : `終了 / ${total}問中`;
+  progressFill.style.width = (current / total * 100) + "%";
   scoreLabel.textContent = `正解 ${score}`;
 }
 
 function renderQuestion(){
   updateProgress();
-  const q = QUESTIONS[current];
+  const idx = activeIndices[current];
+  const q = QUESTIONS[idx];
   quizEl.innerHTML = "";
 
   const card = document.createElement("div");
@@ -507,7 +525,7 @@ function renderQuestion(){
   const fallback = document.createElement("div");
   fallback.className = "q-image-fallback";
   fallback.textContent = q.emoji;
-  const num = String(current + 1).padStart(2, "0");
+  const num = String(idx + 1).padStart(2, "0");
   const exts = ["png", "jpg", "jpeg", "webp"];
   let extAttempt = 0;
   function tryLoadImage(){
@@ -531,7 +549,7 @@ function renderQuestion(){
   const head = document.createElement("div");
   head.className = "q-head";
   head.innerHTML = `
-    <span class="q-num">第${current+1}問</span>
+    <span class="q-num">第${idx+1}問</span>
     <span class="q-term">${q.term}</span>
     <span class="q-emoji">${q.emoji}</span>
     <span class="q-reading">（${q.reading}）</span>
@@ -548,10 +566,10 @@ function renderQuestion(){
   nextWrap.className = "next-wrap";
   const nextBtn = document.createElement("button");
   nextBtn.className = "next-btn";
-  nextBtn.textContent = current === QUESTIONS.length - 1 ? "結果を見る" : "次の問題へ";
+  nextBtn.textContent = current === activeIndices.length - 1 ? "結果を見る" : "次の問題へ";
   nextBtn.addEventListener("click", () => {
     current++;
-    if (current < QUESTIONS.length) {
+    if (current < activeIndices.length) {
       renderQuestion();
     } else {
       renderResult();
@@ -582,6 +600,7 @@ function renderQuestion(){
         buttons[correctPosition].classList.add("correct");
         feedback.textContent = "× 不正解";
         feedback.className = "feedback no";
+        wrongIndices.push(idx);
       }
       scoreLabel.textContent = `正解 ${score}`;
       nextBtn.classList.add("show");
@@ -598,7 +617,8 @@ function renderQuestion(){
 }
 
 function renderResult(){
-  progressLabel.textContent = `終了 / ${QUESTIONS.length}`;
+  const total = activeIndices.length;
+  progressLabel.textContent = `終了 / ${total}問中`;
   progressFill.style.width = "100%";
   scoreLabel.textContent = `正解 ${score}`;
 
@@ -606,7 +626,7 @@ function renderResult(){
   const card = document.createElement("div");
   card.className = "card result-card";
 
-  const pct = Math.round(score / QUESTIONS.length * 100);
+  const pct = Math.round(score / total * 100);
   let msg = "";
   if (pct === 100) msg = "全問正解です！すばらしい！";
   else if (pct >= 80) msg = "よくできました！";
@@ -615,18 +635,55 @@ function renderResult(){
 
   card.innerHTML = `
     <div>結果</div>
-    <div class="result-score">${score}<span> / ${QUESTIONS.length}</span></div>
+    <div class="result-score">${score}<span> / ${total}</span></div>
     <div class="result-msg">${msg}</div>
   `;
-  const restartBtn = document.createElement("button");
-  restartBtn.id = "restart-btn";
-  restartBtn.textContent = "もう一度挑戦する";
-  restartBtn.addEventListener("click", () => {
+
+  const actions = document.createElement("div");
+  actions.className = "result-actions";
+
+  const missedThisRun = wrongIndices.slice();
+
+  if (missedThisRun.length > 0) {
+    const retryWrongBtn = document.createElement("button");
+    retryWrongBtn.className = "btn-primary";
+    retryWrongBtn.textContent = `間違えた問題だけやり直す（${missedThisRun.length}問）`;
+    retryWrongBtn.addEventListener("click", () => {
+      activeIndices = missedThisRun.slice();
+      current = 0;
+      score = 0;
+      wrongIndices = [];
+      renderQuestion();
+    });
+    actions.appendChild(retryWrongBtn);
+  }
+
+  const retrySameBtn = document.createElement("button");
+  retrySameBtn.className = missedThisRun.length > 0 ? "btn-secondary" : "btn-primary";
+  retrySameBtn.textContent = "同じ問題でもう一度";
+  retrySameBtn.addEventListener("click", () => {
     current = 0;
     score = 0;
+    wrongIndices = [];
     renderQuestion();
   });
-  card.appendChild(restartBtn);
+  actions.appendChild(retrySameBtn);
+
+  if (activeIndices.length !== allIndices.length) {
+    const allBtn = document.createElement("button");
+    allBtn.className = "btn-secondary";
+    allBtn.textContent = `全${allIndices.length}問に戻る`;
+    allBtn.addEventListener("click", () => {
+      activeIndices = allIndices.slice();
+      current = 0;
+      score = 0;
+      wrongIndices = [];
+      renderQuestion();
+    });
+    actions.appendChild(allBtn);
+  }
+
+  card.appendChild(actions);
   quizEl.appendChild(card);
 }
 
