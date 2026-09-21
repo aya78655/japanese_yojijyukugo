@@ -25,11 +25,12 @@
     background:var(--bg);
     color:var(--ink);
     line-height:1.7;
-    padding-bottom:80px;
+    padding-bottom:60px;
+    min-height:100vh;
   }
   header{
     text-align:center;
-    padding:36px 16px 20px;
+    padding:36px 16px 12px;
   }
   header h1{
     margin:0 0 8px;
@@ -40,23 +41,98 @@
     color:var(--sub);
     font-size:0.95rem;
   }
+  .progress-wrap{
+    position:sticky;
+    top:0;
+    z-index:10;
+    background:rgba(247,245,240,0.92);
+    backdrop-filter:blur(6px);
+    border-bottom:1px solid var(--border);
+    padding:12px 16px;
+  }
+  .progress-inner{
+    max-width:720px;
+    margin:0 auto;
+    display:flex;
+    align-items:center;
+    gap:14px;
+    font-size:0.85rem;
+    color:var(--sub);
+  }
+  .progress-bar-track{
+    flex:1;
+    height:6px;
+    background:var(--accent-soft);
+    border-radius:999px;
+    overflow:hidden;
+  }
+  .progress-bar-fill{
+    height:100%;
+    background:var(--accent);
+    border-radius:999px;
+    transition:width .25s ease;
+  }
+  .progress-inner strong{
+    color:var(--accent);
+    white-space:nowrap;
+  }
   main{
     max-width:720px;
     margin:0 auto;
-    padding:0 16px;
+    padding:24px 16px 0;
   }
   .card{
     background:var(--card);
     border:1px solid var(--border);
     border-radius:14px;
-    padding:20px 20px 16px;
-    margin-bottom:16px;
+    padding:24px 22px 20px;
+  }
+  .q-body{
+    display:flex;
+    gap:18px;
+    align-items:flex-start;
+  }
+  .q-image-wrap{
+    flex:0 0 120px;
+    width:120px;
+    height:120px;
+    border-radius:12px;
+    overflow:hidden;
+    background:var(--accent-soft);
+    border:1px solid var(--border);
+  }
+  .q-image{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    display:block;
+  }
+  .q-image-fallback{
+    width:100%;
+    height:100%;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    font-size:2.6rem;
+  }
+  .q-content{
+    flex:1;
+    min-width:0;
+  }
+  @media (max-width:480px){
+    .q-body{
+      flex-direction:column;
+    }
+    .q-image-wrap{
+      width:100%;
+      height:180px;
+    }
   }
   .q-head{
     display:flex;
     align-items:baseline;
     gap:10px;
-    margin-bottom:14px;
+    margin-bottom:18px;
     flex-wrap:wrap;
   }
   .q-num{
@@ -67,11 +143,11 @@
     padding:2px 10px;
   }
   .q-term{
-    font-size:1.25rem;
+    font-size:1.35rem;
     font-weight:700;
   }
   .q-emoji{
-    font-size:1.3rem;
+    font-size:1.4rem;
   }
   .q-reading{
     font-size:0.85rem;
@@ -80,15 +156,15 @@
   .choices{
     display:flex;
     flex-direction:column;
-    gap:8px;
+    gap:10px;
   }
   button.choice{
     text-align:left;
-    padding:12px 14px;
+    padding:13px 14px;
     border:1.5px solid var(--border);
     border-radius:10px;
     background:#fff;
-    font-size:0.98rem;
+    font-size:1rem;
     color:var(--ink);
     cursor:pointer;
     transition:background .15s, border-color .15s;
@@ -115,45 +191,69 @@
     color:var(--wrong);
   }
   .feedback{
-    margin-top:10px;
-    font-size:0.9rem;
-    font-weight:600;
+    margin-top:16px;
+    font-size:1rem;
+    font-weight:700;
+    min-height:1.4em;
   }
   .feedback.ok{ color:var(--correct); }
   .feedback.no{ color:var(--wrong); }
 
-  .scorebar{
-    position:sticky;
-    top:0;
-    z-index:10;
-    background:rgba(247,245,240,0.92);
-    backdrop-filter:blur(6px);
-    border-bottom:1px solid var(--border);
-    padding:10px 16px;
-    display:flex;
-    justify-content:center;
-    gap:24px;
-    font-size:0.9rem;
+  .next-wrap{
+    margin-top:18px;
+    text-align:right;
   }
-  .scorebar strong{
-    color:var(--accent);
-  }
-  .reset-wrap{
-    max-width:720px;
-    margin:20px auto 0;
-    padding:0 16px;
-    text-align:center;
-  }
-  #reset-btn{
+  .next-btn{
     background:var(--accent);
     color:#fff;
     border:none;
-    padding:10px 22px;
+    padding:10px 24px;
+    border-radius:999px;
+    font-size:0.95rem;
+    cursor:pointer;
+    opacity:0;
+    transform:translateY(4px);
+    pointer-events:none;
+    transition:opacity .2s ease, transform .2s ease;
+  }
+  .next-btn.show{
+    opacity:1;
+    transform:translateY(0);
+    pointer-events:auto;
+  }
+  .next-btn:hover{
+    opacity:0.9;
+  }
+
+  .result-card{
+    text-align:center;
+    padding:40px 22px;
+  }
+  .result-score{
+    font-size:3rem;
+    font-weight:800;
+    color:var(--accent);
+    margin:10px 0 4px;
+  }
+  .result-score span{
+    font-size:1.3rem;
+    color:var(--sub);
+    font-weight:600;
+  }
+  .result-msg{
+    color:var(--sub);
+    margin-bottom:26px;
+  }
+  #restart-btn{
+    background:var(--accent);
+    color:#fff;
+    border:none;
+    padding:12px 28px;
     border-radius:999px;
     font-size:0.95rem;
     cursor:pointer;
   }
-  #reset-btn:hover{
+  #restart-btn:hover{
     opacity:0.9;
   }
   footer{
@@ -166,21 +266,20 @@
 </head>
 <body>
 
-<div class="scorebar">
-  <span>解答済み：<strong id="answered">0</strong> / 29</span>
-  <span>正解：<strong id="score">0</strong></span>
+<div class="progress-wrap">
+  <div class="progress-inner">
+    <span id="progress-label">第1問 / 29</span>
+    <div class="progress-bar-track"><div class="progress-bar-fill" id="progress-fill" style="width:0%"></div></div>
+    <strong id="score-label">正解 0</strong>
+  </div>
 </div>
 
 <header>
   <h1>四字熟語クイズ</h1>
-  <p>正しい意味を選んでください。選ぶとすぐに正解・不正解が表示されます。</p>
+  <p>正しい意味を選んでください。1問ずつ答え合わせをしながら進みます。</p>
 </header>
 
 <main id="quiz"></main>
-
-<div class="reset-wrap">
-  <button id="reset-btn">もう一度やり直す</button>
-</div>
 
 <footer>全29問 &middot; 四字熟語の意味クイズ</footer>
 
@@ -364,73 +463,161 @@ const QUESTIONS = [
 
 const LABELS = ["A","B","C","D"];
 const quizEl = document.getElementById("quiz");
-const answeredEl = document.getElementById("answered");
-const scoreEl = document.getElementById("score");
-let answeredCount = 0;
+const progressLabel = document.getElementById("progress-label");
+const progressFill = document.getElementById("progress-fill");
+const scoreLabel = document.getElementById("score-label");
+
+let current = 0;
 let score = 0;
 
-function render(){
-  quizEl.innerHTML = "";
-  answeredCount = 0;
-  score = 0;
-  QUESTIONS.forEach((q, qi) => {
-    const card = document.createElement("div");
-    card.className = "card";
-
-    const head = document.createElement("div");
-    head.className = "q-head";
-    head.innerHTML = `
-      <span class="q-num">第${qi+1}問</span>
-      <span class="q-term">${q.term}</span>
-      <span class="q-emoji">${q.emoji}</span>
-      <span class="q-reading">（${q.reading}）</span>
-    `;
-    card.appendChild(head);
-
-    const choicesWrap = document.createElement("div");
-    choicesWrap.className = "choices";
-
-    const feedback = document.createElement("div");
-    feedback.className = "feedback";
-
-    q.choices.forEach((text, ci) => {
-      const btn = document.createElement("button");
-      btn.className = "choice";
-      btn.innerHTML = `<span class="label">${LABELS[ci]}</span>${text}`;
-      btn.addEventListener("click", () => {
-        if (btn.dataset.locked) return;
-        const buttons = choicesWrap.querySelectorAll("button.choice");
-        buttons.forEach(b => b.dataset.locked = "1");
-
-        if (ci === q.correct) {
-          btn.classList.add("correct");
-          feedback.textContent = "○ 正解！";
-          feedback.className = "feedback ok";
-          score++;
-        } else {
-          btn.classList.add("wrong");
-          buttons[q.correct].classList.add("correct");
-          feedback.textContent = "× 不正解";
-          feedback.className = "feedback no";
-        }
-        answeredCount++;
-        answeredEl.textContent = answeredCount;
-        scoreEl.textContent = score;
-      });
-      choicesWrap.appendChild(btn);
-    });
-
-    card.appendChild(choicesWrap);
-    card.appendChild(feedback);
-    quizEl.appendChild(card);
-  });
-  answeredEl.textContent = answeredCount;
-  scoreEl.textContent = score;
+function updateProgress(){
+  const shown = Math.min(current + 1, QUESTIONS.length);
+  progressLabel.textContent = current < QUESTIONS.length
+    ? `第${shown}問 / ${QUESTIONS.length}`
+    : `終了 / ${QUESTIONS.length}`;
+  progressFill.style.width = (current / QUESTIONS.length * 100) + "%";
+  scoreLabel.textContent = `正解 ${score}`;
 }
 
-document.getElementById("reset-btn").addEventListener("click", render);
+function renderQuestion(){
+  updateProgress();
+  const q = QUESTIONS[current];
+  quizEl.innerHTML = "";
 
-render();
+  const card = document.createElement("div");
+  card.className = "card";
+
+  const body = document.createElement("div");
+  body.className = "q-body";
+
+  const imageWrap = document.createElement("div");
+  imageWrap.className = "q-image-wrap";
+  const img = document.createElement("img");
+  img.className = "q-image";
+  img.alt = q.term + "のイラスト";
+  const fallback = document.createElement("div");
+  fallback.className = "q-image-fallback";
+  fallback.textContent = q.emoji;
+  const num = String(current + 1).padStart(2, "0");
+  const exts = ["png", "jpg", "jpeg", "webp"];
+  let extAttempt = 0;
+  function tryLoadImage(){
+    if (extAttempt >= exts.length) {
+      img.style.display = "none";
+      fallback.style.display = "flex";
+      return;
+    }
+    img.src = `images/${num}.${exts[extAttempt]}`;
+    extAttempt++;
+  }
+  img.addEventListener("error", tryLoadImage);
+  tryLoadImage();
+  imageWrap.appendChild(img);
+  imageWrap.appendChild(fallback);
+  body.appendChild(imageWrap);
+
+  const content = document.createElement("div");
+  content.className = "q-content";
+
+  const head = document.createElement("div");
+  head.className = "q-head";
+  head.innerHTML = `
+    <span class="q-num">第${current+1}問</span>
+    <span class="q-term">${q.term}</span>
+    <span class="q-emoji">${q.emoji}</span>
+    <span class="q-reading">（${q.reading}）</span>
+  `;
+  content.appendChild(head);
+
+  const choicesWrap = document.createElement("div");
+  choicesWrap.className = "choices";
+
+  const feedback = document.createElement("div");
+  feedback.className = "feedback";
+
+  const nextWrap = document.createElement("div");
+  nextWrap.className = "next-wrap";
+  const nextBtn = document.createElement("button");
+  nextBtn.className = "next-btn";
+  nextBtn.textContent = current === QUESTIONS.length - 1 ? "結果を見る" : "次の問題へ";
+  nextBtn.addEventListener("click", () => {
+    current++;
+    if (current < QUESTIONS.length) {
+      renderQuestion();
+    } else {
+      renderResult();
+    }
+  });
+  nextWrap.appendChild(nextBtn);
+
+  q.choices.forEach((text, ci) => {
+    const btn = document.createElement("button");
+    btn.className = "choice";
+    btn.innerHTML = `<span class="label">${LABELS[ci]}</span>${text}`;
+    btn.addEventListener("click", () => {
+      if (btn.dataset.locked) return;
+      const buttons = choicesWrap.querySelectorAll("button.choice");
+      buttons.forEach(b => b.dataset.locked = "1");
+
+      if (ci === q.correct) {
+        btn.classList.add("correct");
+        feedback.textContent = "○ 正解！";
+        feedback.className = "feedback ok";
+        score++;
+      } else {
+        btn.classList.add("wrong");
+        buttons[q.correct].classList.add("correct");
+        feedback.textContent = "× 不正解";
+        feedback.className = "feedback no";
+      }
+      scoreLabel.textContent = `正解 ${score}`;
+      nextBtn.classList.add("show");
+    });
+    choicesWrap.appendChild(btn);
+  });
+
+  content.appendChild(choicesWrap);
+  content.appendChild(feedback);
+  content.appendChild(nextWrap);
+  body.appendChild(content);
+  card.appendChild(body);
+  quizEl.appendChild(card);
+}
+
+function renderResult(){
+  progressLabel.textContent = `終了 / ${QUESTIONS.length}`;
+  progressFill.style.width = "100%";
+  scoreLabel.textContent = `正解 ${score}`;
+
+  quizEl.innerHTML = "";
+  const card = document.createElement("div");
+  card.className = "card result-card";
+
+  const pct = Math.round(score / QUESTIONS.length * 100);
+  let msg = "";
+  if (pct === 100) msg = "全問正解です！すばらしい！";
+  else if (pct >= 80) msg = "よくできました！";
+  else if (pct >= 50) msg = "もう少し復習してみましょう。";
+  else msg = "もう一度見直してみましょう。";
+
+  card.innerHTML = `
+    <div>結果</div>
+    <div class="result-score">${score}<span> / ${QUESTIONS.length}</span></div>
+    <div class="result-msg">${msg}</div>
+  `;
+  const restartBtn = document.createElement("button");
+  restartBtn.id = "restart-btn";
+  restartBtn.textContent = "もう一度挑戦する";
+  restartBtn.addEventListener("click", () => {
+    current = 0;
+    score = 0;
+    renderQuestion();
+  });
+  card.appendChild(restartBtn);
+  quizEl.appendChild(card);
+}
+
+renderQuestion();
 </script>
 
 </body>
